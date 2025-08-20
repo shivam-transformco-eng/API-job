@@ -3,7 +3,7 @@ name: JSONPlaceholder API Calls
 on:
   workflow_dispatch: # allow manual runs
   schedule:
-    - cron: "* * * * *" # run every hour
+    - cron: "*/10 * * * *" # run every 10 minutes
 
 jobs:
   call-apis:
@@ -13,12 +13,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Print run time
+        run: |
+          echo "=== Workflow started at: $(date) ==="
+
       - name: Call JSONPlaceholder APIs
         run: |
           echo "Fetching JSONPlaceholder posts..."
 
           for id in 1 2 3 4 5 6 7
           do
-            echo "Fetching post $id"
+            echo "Fetching post $id at $(date)"
             curl -s https://jsonplaceholder.typicode.com/posts/$id | jq .
           done
