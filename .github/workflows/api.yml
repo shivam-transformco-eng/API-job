@@ -1,0 +1,24 @@
+name: JSONPlaceholder API Calls
+
+on:
+  workflow_dispatch: # allow manual runs
+  schedule:
+    - cron: "* * * * *" # run every hour
+
+jobs:
+  call-apis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Call JSONPlaceholder APIs
+        run: |
+          echo "Fetching JSONPlaceholder posts..."
+
+          for id in 1 2 3 4 5 6 7
+          do
+            echo "Fetching post $id"
+            curl -s https://jsonplaceholder.typicode.com/posts/$id | jq .
+          done
