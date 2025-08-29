@@ -1,6 +1,9 @@
 name: Call Koyfin API Every 5 Minutes
 
 on:
+  push:                     # runs on every commit to any branch
+    branches:
+      - '**'
   schedule:
     - cron: "*/5 * * * *"   # runs every 5 minutes
   workflow_dispatch:        # allows manual trigger
@@ -9,16 +12,32 @@ jobs:
   call-api:
     runs-on: ubuntu-latest
     steps:
-      - name: Call API with timestamp and response code
+      - name: Call APIs with timestamp, response code, and duration
         run: |
-          echo "=== API Call Started at $(date -u '+%Y-%m-%d %H:%M:%S UTC') ==="
-          
-          response=$(curl -s -o response.json -w "%{http_code}" \
-            -X POST "https://koyfinapi-qa.sdlc.ai/v1/views/kairos-scheduler-bot/daily-summary/collapsed" \
-            -H "Content-Type: application/json" \
-            -d '{"type":"by_value","enable_column":false}')
-          
-          echo "Response Code: $response"
-          echo -n "Response Preview: "
-          head -c 10 response.json
-          echo ""  # newline
+          echo "=== API Calls Started ==="
+          echo "UTC Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "IST Time: $(TZ=Asia/Kolkata date '+%Y-%m-%d %H:%M:%S IST')"
+          echo ""
+
+          # Function to call API and measure response time
+          call_api() {
+            url=$1
+            name=$2
+            echo "--- Calling $name ---"
+            start_time=$(date +%s%3N)   # milliseconds
+            response=$(curl -s -o response.json -w "%{http_code}" \
+              -X POST "$url" \
+              -H "Content-Type: application/json" \
+              -d '{"type":"by_value","enable_column":false}')
+            end_time=$(date +%s%3N)
+            duration=$((end_time - start_time))
+            echo "Response Code: $response"
+            echo "Time Taken: ${duration} ms"
+            echo "Completed at IST: $(TZ=Asia/Kolkata date '+%Y-%m-%d %H:%M:%S')"
+            echo ""
+          }
+
+          # Call APIs
+          call_api "https://koyfinapi-qa.sdlc.ai/v1/views/kairos-scheduler-bot/daily-summary/collapsed" "Daily Summary Collapsed"
+          call_api "https://koyfinapi-qa.sdlc.ai/v1/views/open-orders/financial_raw_data/download" "Open Orders Financial Raw Data"
+          call_api "https://koyfinapi-qa.sdlc.ai/v1/views/national-daily/financial_raw_data/download" "National Daily Financial Raw Data"
