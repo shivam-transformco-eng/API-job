@@ -1,28 +1,24 @@
-name: JSONPlaceholder API Calls
+name: Call Koyfin API Every 5 Minutes
 
 on:
-  workflow_dispatch: # allow manual runs
-  # schedule:
-  #   - cron: "*/10 * * * *" # run every 10 minutes
+  schedule:
+    - cron: "*/5 * * * *"   # runs every 5 minutes
+  workflow_dispatch:        # allows manual trigger
 
 jobs:
-  call-apis:
+  call-api:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Print run time
+      - name: Call API with timestamp and response code
         run: |
-          echo "=== Workflow started at: $(date) ==="
-
-      - name: Call JSONPlaceholder APIs
-        run: |
-          echo "Fetching JSONPlaceholder posts..."
-
-          for id in 1 2 3 4 5 6 7
-          do
-            echo "Fetching post $id at $(date)"
-            curl -s https://jsonplaceholder.typicode.com/posts/$id | jq .
-          done
+          echo "=== API Call Started at $(date -u '+%Y-%m-%d %H:%M:%S UTC') ==="
+          
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST "https://koyfinapi-qa.sdlc.ai/v1/views/kairos-scheduler-bot/daily-summary/collapsed" \
+            -H "Content-Type: application/json" \
+            -d '{"type":"by_value","enable_column":false}')
+          
+          echo "Response Code: $response"
+          echo -n "Response Preview: "
+          head -c 10 response.json
+          echo ""  # newline
